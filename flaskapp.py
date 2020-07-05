@@ -23,6 +23,7 @@ mongoDB = MongoDB(app.config['MONGO_URI'], app.config['MONGO_DB'])
 # error handling
 @api.errorhandler(BadRequest)
 def handle_bad_request_exception(error):
+    print(error)
     return {"message": str(error)}, 403
 
 
@@ -46,14 +47,14 @@ class CheckStatus(Resource):
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
-argument_parser.add_argument('temperatura', required=True, type=str, location='json', help='missing data parameter')
-argument_parser.add_argument('humedad', required=True, type=str, location='json', help='missing sensor parameter')
-argument_parser.add_argument('luz', required=True, type=bool, location='json', help='missing data parameter')
-argument_parser.add_argument('movimiento', required=True, type=bool, location='json', help='missing sensor parameter')
+argument_parser.add_argument('temperatura', required=True, type=str, location='json', help='missing temperatura parameter')
+argument_parser.add_argument('humedad', required=True, type=str, location='json', help='missing humedad parameter')
+argument_parser.add_argument('luz', required=True, type=bool, location='json', help='missing luz parameter')
+argument_parser.add_argument('movimiento', required=True, type=bool, location='json', help='missing movimiento parameter')
 
 @mongodb_service.route("/insert")
 @mongodb_service.doc(
-    params={'data': 'A json with data to insert', 'sensor': 'The sensor ID'})
+    params={'temperatura': 'Temperature to insert', 'humedad': 'Humidity to insert', 'luz': 'Bright to insert', 'movimiento': 'Movement to insert'})
 class SQLInsert(Resource):
 
     def __init__(self, *args, **kwargs):
