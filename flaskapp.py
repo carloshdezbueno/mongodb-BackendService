@@ -3,6 +3,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_restplus import Api, Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
+import json
 
 from config import APP_NAME
 from MongoDBUtils.MongoDBUtils import MongoDB
@@ -97,7 +98,7 @@ class SQLInsert(Resource):
 
 
 argument_parserGet = reqparse.RequestParser()
-argument_parserGet.add_argument('userID', required=False, type=str, location='json', help='missing userID parameter')
+argument_parserGet.add_argument('userID', required=True, type=str, location='json', help='missing userID parameter')
 
 @mongodb_service.route("/getData")
 @mongodb_service.doc(
@@ -106,14 +107,32 @@ class SQLGet(Resource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parser = argument_parser
+        self.parser = argument_parserGet
 
     @api.expect(argument_parserGet)
     def get(self):
         """get data from db"""
-        for x in mongoDB.select(app.config['MONGO_COLLECTION']):
-            print(x)
 
+        userID = self._get_args()
+
+        data = list(mongoDB.select(app.config['MONGO_COLLECTION'], userID))
+
+        datos = self._selectKeys(data, ["UserID", "temperatura", "humedad", "luz", "movimiento"])
+
+        print(datos)
         return {
             "status": "OK"
         }
+
+    def _get_args(self):
+        args = self.parser.parse_args()
+        
+        userID = args['userID']
+        
+        return userID
+
+    @classmethod
+    def _selectKeys(cls, data, keys):
+        datos =[]
+
+        return datos

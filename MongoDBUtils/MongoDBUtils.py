@@ -9,7 +9,8 @@ class MongoDB:
     def insert(self, collection, data):
     	self.conn[collection].insert_one(data)
 
-    def select(self, collection):
-        return self.conn[collection].find()
+    def select(self, collection, userID):
+        return self.conn[collection].find({ "UserID": userID })
+        
             
         
