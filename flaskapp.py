@@ -1,9 +1,9 @@
 from datetime import datetime
+
 from flask import Flask
 from flask_cors import CORS
 from flask_restplus import Api, Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
-import json
 
 from config import APP_NAME
 from MongoDBUtils.MongoDBUtils import MongoDB
@@ -11,7 +11,8 @@ from MongoDBUtils.MongoDBUtils import MongoDB
 # flask configuration
 app = Flask(APP_NAME)
 app.config.from_object('config')
-api = Api(app, version=app.config['VERSION'], title=app.config['TITLE'], description=app.config['DESCRIPTION'])
+api = Api(app, version=app.config['VERSION'],
+          title=app.config['TITLE'], description=app.config['DESCRIPTION'])
 mongodb_service = api.namespace('v1', description=app.config['DESCRIPTION'])
 
 # flask anti CORS policy configuration
@@ -44,15 +45,21 @@ class CheckStatus(Resource):
 
     def get(self):
         return {"status": "OK"}
- 
+
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
-argument_parser.add_argument('UserID', required=True, type=str, location='json', help='missing UserID parameter')
-argument_parser.add_argument('temperatura', required=True, type=float, location='json', help='missing temperatura parameter')
-argument_parser.add_argument('humedad', required=True, type=float, location='json', help='missing humedad parameter')
-argument_parser.add_argument('luz', required=True, type=bool, location='json', help='missing luz parameter')
-argument_parser.add_argument('movimiento', required=True, type=bool, location='json', help='missing movimiento parameter')
+argument_parser.add_argument(
+    'UserID', required=True, type=str, location='json', help='missing UserID parameter')
+argument_parser.add_argument('temperatura', required=True, type=float,
+                             location='json', help='missing temperatura parameter')
+argument_parser.add_argument('humedad', required=True, type=float,
+                             location='json', help='missing humedad parameter')
+argument_parser.add_argument(
+    'luz', required=True, type=bool, location='json', help='missing luz parameter')
+argument_parser.add_argument('movimiento', required=True, type=bool,
+                             location='json', help='missing movimiento parameter')
+
 
 @mongodb_service.route("/insert")
 @mongodb_service.doc(
@@ -79,7 +86,7 @@ class SQLInsert(Resource):
         luz = args['luz']
         movimiento = args['movimiento']
         userID = args['UserID']
-        
+
         return temperatura, humedad, luz, movimiento, userID
 
     @classmethod
@@ -96,9 +103,10 @@ class SQLInsert(Resource):
         return "OK"
 
 
-
 argument_parserGet = reqparse.RequestParser()
-argument_parserGet.add_argument('userID', required=True, type=str, location='json', help='missing userID parameter')
+argument_parserGet.add_argument(
+    'userID', required=True, type=str, location='json', help='missing userID parameter')
+
 
 @mongodb_service.route("/getData")
 @mongodb_service.doc(
@@ -117,7 +125,8 @@ class SQLGet(Resource):
 
         data = list(mongoDB.select(app.config['MONGO_COLLECTION'], userID))
 
-        datos = self._selectKeys(data, ["UserID", "temperatura", "humedad", "luz", "movimiento"])
+        datos = self._selectKeys(
+            data, ["UserID", "temperatura", "humedad", "luz", "movimiento"])
 
         return {
             "status": "OK",
@@ -126,12 +135,12 @@ class SQLGet(Resource):
 
     def _get_args(self):
         args = self.parser.parse_args()
-        
+
         userID = args['userID']
-        
+
         return userID
 
     @classmethod
     def _selectKeys(cls, data, keys):
 
-        return [{key:datos.pop(key) for key in keys} for datos in data]
+        return [{key: datos.pop(key) for key in keys} for datos in data]
