@@ -119,9 +119,9 @@ class SQLGet(Resource):
 
         datos = self._selectKeys(data, ["UserID", "temperatura", "humedad", "luz", "movimiento"])
 
-        print(datos)
         return {
-            "status": "OK"
+            "status": "OK",
+            "data": datos
         }
 
     def _get_args(self):
@@ -133,6 +133,5 @@ class SQLGet(Resource):
 
     @classmethod
     def _selectKeys(cls, data, keys):
-        datos =[]
 
-        return datos
+        return [{key:datos.pop(key) for key in keys} for datos in data]
