@@ -8,3 +8,8 @@ class MongoDB:
 
     def insert(self, collection, data):
     	self.conn[collection].insert_one(data)
+
+    def select(self, collection):
+        return self.conn[collection].find()
+            
+        

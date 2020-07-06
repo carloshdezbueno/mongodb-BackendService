@@ -47,8 +47,9 @@ class CheckStatus(Resource):
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
-argument_parser.add_argument('temperatura', required=True, type=str, location='json', help='missing temperatura parameter')
-argument_parser.add_argument('humedad', required=True, type=str, location='json', help='missing humedad parameter')
+argument_parser.add_argument('UserID', required=True, type=str, location='json', help='missing UserID parameter')
+argument_parser.add_argument('temperatura', required=True, type=float, location='json', help='missing temperatura parameter')
+argument_parser.add_argument('humedad', required=True, type=float, location='json', help='missing humedad parameter')
 argument_parser.add_argument('luz', required=True, type=bool, location='json', help='missing luz parameter')
 argument_parser.add_argument('movimiento', required=True, type=bool, location='json', help='missing movimiento parameter')
 
@@ -64,8 +65,8 @@ class SQLInsert(Resource):
     @api.expect(argument_parser)
     def post(self):
         """insert data in db"""
-        temperatura, humedad, luz, movimiento = self._get_args()
-        status = self._insert_db(temperatura, humedad, luz, movimiento)
+        temperatura, humedad, luz, movimiento, userID = self._get_args()
+        status = self._insert_db(temperatura, humedad, luz, movimiento, userID)
         return {
             "status": status
         }
@@ -76,12 +77,14 @@ class SQLInsert(Resource):
         humedad = args['humedad']
         luz = args['luz']
         movimiento = args['movimiento']
+        userID = args['UserID']
         
-        return temperatura, humedad, luz, movimiento
+        return temperatura, humedad, luz, movimiento, userID
 
     @classmethod
-    def _insert_db(cls, temperatura, humedad, luz, movimiento):
+    def _insert_db(cls, temperatura, humedad, luz, movimiento, userID):
         document = {
+            "UserID": userID,
             "timestamp": datetime.today(),
             "temperatura": temperatura,
             "humedad": humedad,
@@ -90,3 +93,27 @@ class SQLInsert(Resource):
         }
         mongoDB.insert(app.config['MONGO_COLLECTION'], document)
         return "OK"
+
+
+
+argument_parserGet = reqparse.RequestParser()
+argument_parserGet.add_argument('userID', required=False, type=str, location='json', help='missing userID parameter')
+
+@mongodb_service.route("/getData")
+@mongodb_service.doc(
+    params={'userID': 'UserID to use the api'})
+class SQLGet(Resource):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parser = argument_parser
+
+    @api.expect(argument_parserGet)
+    def get(self):
+        """get data from db"""
+        for x in mongoDB.select(app.config['MONGO_COLLECTION']):
+            print(x)
+
+        return {
+            "status": "OK"
+        }
