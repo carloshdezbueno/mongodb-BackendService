@@ -1,4 +1,10 @@
 from datetime import datetime
+import json
+from getmac import get_mac_address as gma
+import serial
+import os
+import threading
+import time
 
 from flask import Flask
 from flask_cors import CORS
@@ -46,10 +52,48 @@ class CheckStatus(Resource):
     def get(self):
         return {"status": "OK"}
 
+threadLock = threading.Lock()
+comandos = {"posix": {'puertoSerie' : '/dev/ttyUSB0'},
+                    "nt": {'puertoSerie' : 'COM3'}}
+
+class ArduinoConnection(threading.Thread):
+
+    
+
+    def __init__(self):
+        threading.Thread.__init__(self)
+        
+        
+    def getDataArduino(self):
+        userID = gma()
+
+        threadLock.acquire()
+        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600)
+        
+        with arduino:
+            arduino.readline()
+            datos = arduino.readline()
+        
+        threadLock.release()
+        return userID, datos
+    
+    def sendDataArduino(self, orden):
+
+        threadLock.acquire()
+        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600)
+        with arduino:
+            arduino.readline()
+            arduino.write(orden.encode())
+            
+        threadLock.release()
+        return 
+
+
+    
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
-argument_parser.add_argument(
+"""argument_parser.add_argument(
     'UserID', required=True, type=str, location='json', help='missing UserID parameter')
 argument_parser.add_argument('temperatura', required=True, type=float,
                              location='json', help='missing temperatura parameter')
@@ -58,7 +102,7 @@ argument_parser.add_argument('humedad', required=True, type=float,
 argument_parser.add_argument(
     'luz', required=True, type=bool, location='json', help='missing luz parameter')
 argument_parser.add_argument('movimiento', required=True, type=bool,
-                             location='json', help='missing movimiento parameter')
+                             location='json', help='missing movimiento parameter')"""
 
 
 @mongodb_service.route("/insert")
@@ -73,10 +117,35 @@ class SQLInsert(Resource):
     @api.expect(argument_parser)
     def post(self):
         """insert data in db"""
-        temperatura, humedad, luz, movimiento, userID = self._get_args()
-        status = self._insert_db(temperatura, humedad, luz, movimiento, userID)
+
+        arduinoDao = ArduinoConnection()
+
+        userID, datos = arduinoDao.getDataArduino()
+        print(datos)
+        if self._validateJSON(datos):
+            datos = json.loads(datos.decode("utf-8"))
+            
+            temperatura, humedad, luz, movimiento = datos["temperatura"], datos["humedad"], datos["luz"], datos["movimiento"]
+            status = self._insert_db(temperatura, humedad, luz, movimiento, userID)
+        elif datos.decode("utf-8") == "":
+            status = "No se realizo medicion"
+        else:
+            status = "No esta OK mi pana"
+        
         return {
             "status": status
+        }
+
+    @api.expect(argument_parser)
+    def get(self):
+        """insert data in db"""
+
+        arduinoDao = ArduinoConnection()
+
+        arduinoDao.sendDataArduino("1")
+
+        return {
+            "status": "OK"
         }
 
     def _get_args(self):
@@ -101,6 +170,14 @@ class SQLInsert(Resource):
         }
         mongoDB.insert(app.config['MONGO_COLLECTION'], document)
         return "OK"
+
+    @classmethod
+    def _validateJSON(cls, jsonData):
+        try:
+            json.loads(jsonData)
+        except ValueError:
+            return False
+        return True
 
 
 argument_parserGet = reqparse.RequestParser()
@@ -144,3 +221,34 @@ class SQLGet(Resource):
     def _selectKeys(cls, data, keys):
 
         return [{key: datos.pop(key) for key in keys} for datos in data]
+
+
+"""argument_parserGrab = reqparse.RequestParser()
+
+@mongodb_service.route("/grabInfo")
+@mongodb_service.doc(
+    params={'userID': 'UserID to use the api'})
+class GrabInfo(Resource):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parser = argument_parserGrab
+
+    @api.expect(argument_parserGrab)
+    def get(self):
+        #get data from db
+
+
+
+        return {
+            "status": "OK"
+        }
+
+    def _get_args(self):
+        args = self.parser.parse_args()
+
+        userID = args['userID']
+
+        return userID
+
+    """
