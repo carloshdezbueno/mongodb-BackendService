@@ -68,24 +68,42 @@ class ArduinoConnection(threading.Thread):
         userID = gma()
 
         threadLock.acquire()
-        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600)
-        
+        try:
+            arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600, timeout=5)
+            
+            arduino.flushInput()
+            arduino.flushOutput()
+
+        except serial.SerialException:
+            return None, None
         with arduino:
-            arduino.readline()
-            datos = arduino.readline()
+            
+            arduino.read() #Limpia el buffer de entrada
+
+            arduino.write(b'enviame')
+
+            arduino.flush()
+
+            arduino.readline() #Elimina la palabra enviada anteriormente
+
+            datos = arduino.readline() #Recibe los datos reales
+            
         
-        threadLock.release()
-        return userID, datos
+        
+        threadLock.release()  
+        return userID, datos 
     
     def sendDataArduino(self, orden):
 
         threadLock.acquire()
-        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600)
+        
+        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600, timeout = 1)
+
         with arduino:
-            arduino.readline()
+            arduino.readline()#Vacia el buffer del puerto serie para enviar datos despues
             arduino.write(orden.encode())
             
-        threadLock.release()
+        threadLock.release() 
         return 
 
 
@@ -93,22 +111,12 @@ class ArduinoConnection(threading.Thread):
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
-"""argument_parser.add_argument(
-    'UserID', required=True, type=str, location='json', help='missing UserID parameter')
-argument_parser.add_argument('temperatura', required=True, type=float,
-                             location='json', help='missing temperatura parameter')
-argument_parser.add_argument('humedad', required=True, type=float,
-                             location='json', help='missing humedad parameter')
-argument_parser.add_argument(
-    'luz', required=True, type=bool, location='json', help='missing luz parameter')
-argument_parser.add_argument('movimiento', required=True, type=bool,
-                             location='json', help='missing movimiento parameter')"""
 
 
-@mongodb_service.route("/insert")
+@mongodb_service.route("/grabData")
 @mongodb_service.doc(
-    params={'temperatura': 'Temperature to insert', 'humedad': 'Humidity to insert', 'luz': 'Bright to insert', 'movimiento': 'Movement to insert'})
-class SQLInsert(Resource):
+    params={})
+class GrabDataArduino(Resource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -116,40 +124,31 @@ class SQLInsert(Resource):
 
     @api.expect(argument_parser)
     def post(self):
-        """insert data in db"""
+        """ask the arduino for data and insert data in db"""
 
         arduinoDao = ArduinoConnection()
 
         userID, datos = arduinoDao.getDataArduino()
         print(datos)
-        if self._validateJSON(datos):
+
+        if datos and self._validateJSON(datos):
             datos = json.loads(datos.decode("utf-8"))
             
             temperatura, humedad, luz, movimiento = datos["temperatura"], datos["humedad"], datos["luz"], datos["movimiento"]
             status = self._insert_db(temperatura, humedad, luz, movimiento, userID)
-        elif datos.decode("utf-8") == "":
+        elif datos and datos.decode("utf-8") == "":
             status = "No se realizo medicion"
         else:
             status = "No esta OK mi pana"
         
         return {
-            "status": status
+            "status": status,
+            "data": datos or {}
         }
 
-    @api.expect(argument_parser)
-    def get(self):
-        """insert data in db"""
-
-        arduinoDao = ArduinoConnection()
-
-        arduinoDao.sendDataArduino("1")
-
-        return {
-            "status": "OK"
-        }
-
+    #No se usa
     def _get_args(self):
-        args = self.parser.parse_args()
+        args = self.parser.parse_args() 
         temperatura = args['temperatura']
         humedad = args['humedad']
         luz = args['luz']
@@ -203,7 +202,7 @@ class SQLGet(Resource):
         data = list(mongoDB.select(app.config['MONGO_COLLECTION'], userID))
 
         datos = self._selectKeys(
-            data, ["UserID", "temperatura", "humedad", "luz", "movimiento"])
+            data, ["timestamp", "UserID", "temperatura", "humedad", "luz", "movimiento"])
 
         return {
             "status": "OK",
@@ -219,26 +218,35 @@ class SQLGet(Resource):
 
     @classmethod
     def _selectKeys(cls, data, keys):
+ 
+        return [{key: datos.pop(key) if key != "timestamp" else datos.pop(key).strftime("%m/%d/%Y, %H:%M:%S") for key in keys} for datos in data]
 
-        return [{key: datos.pop(key) for key in keys} for datos in data]
+
+argument_parserSend = reqparse.RequestParser()
+argument_parserSend.add_argument(
+    'orden', required=True, type=str, location='json', help='missing order parameter')
 
 
-"""argument_parserGrab = reqparse.RequestParser()
-
-@mongodb_service.route("/grabInfo")
+@mongodb_service.route("/sendOrder")
 @mongodb_service.doc(
     params={'userID': 'UserID to use the api'})
-class GrabInfo(Resource):
+class SendOrder(Resource):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.parser = argument_parserGrab
+        self.parser = argument_parserSend
 
-    @api.expect(argument_parserGrab)
-    def get(self):
-        #get data from db
+    @api.expect(argument_parserSend)
+    def post(self):
+        """write data in arduino serial port"""
 
+        orden = self._get_args()
 
+        
+        arduinoDao = ArduinoConnection()
+
+        arduinoDao.sendDataArduino(orden)
+        
 
         return {
             "status": "OK"
@@ -246,9 +254,6 @@ class GrabInfo(Resource):
 
     def _get_args(self):
         args = self.parser.parse_args()
+        orden = args['orden']
 
-        userID = args['userID']
-
-        return userID
-
-    """
+        return orden
