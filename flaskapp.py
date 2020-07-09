@@ -52,59 +52,72 @@ class CheckStatus(Resource):
     def get(self):
         return {"status": "OK"}
 
+
 threadLock = threading.Lock()
-comandos = {"posix": {'puertoSerie' : '/dev/ttyUSB0'},
-                    "nt": {'puertoSerie' : 'COM3'}}
+comandos = {"posix": {'puertoSerie': '/dev/ttyUSB0'},
+                    "nt": {'puertoSerie': 'COM3'}}
+
 
 class ArduinoConnection(threading.Thread):
 
-    
-
     def __init__(self):
         threading.Thread.__init__(self)
-        
-        
+
     def getDataArduino(self):
         userID = gma()
 
         threadLock.acquire()
         try:
-            arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600, timeout=5)
-            
+            arduino = serial.Serial(
+                comandos[os.name]["puertoSerie"], 9600, timeout=5)
+
             arduino.flushInput()
             arduino.flushOutput()
 
         except serial.SerialException:
             return None, None
         with arduino:
-            
-            arduino.read() #Limpia el buffer de entrada
+
+            arduino.read()  # Limpia el buffer de entrada
 
             arduino.write(b'enviame')
 
             arduino.flush()
 
-            arduino.readline() #Elimina la palabra enviada anteriormente
+            arduino.readline()  # Elimina la palabra enviada anteriormente
 
-            datos = arduino.readline() #Recibe los datos reales
-            
-        
-        
-        threadLock.release()  
-        return userID, datos 
-    
+            datos = arduino.readline()  # Recibe los datos reales
+
+        threadLock.release()
+        return userID, datos
+
     def sendDataArduino(self, orden):
 
         threadLock.acquire()
-        
-        arduino = serial.Serial(comandos[os.name]["puertoSerie"], 9600, timeout = 1)
+
+        arduino = serial.Serial(
+            comandos[os.name]["puertoSerie"], 9600, timeout=1)
 
         with arduino:
-            arduino.readline()#Vacia el buffer del puerto serie para enviar datos despues
+            arduino.readline()  # Vacia el buffer del puerto serie para enviar datos despues
             arduino.write(orden.encode())
-            
-        threadLock.release() 
-        return 
+            arduino.flush()
+
+            # Elimina los datos del buffer y la palabra enviada anteriormente
+            arduino.readline()
+            arduino.readline()
+
+            confirmacion = arduino.readline().decode(
+                "utf-8")  # Recibe la confirmacion de recepcion
+
+        threadLock.release()
+        if confirmacion == "OK\r\n":
+            return "OK-Orden realizada"
+        elif confirmacion == "No\r\n":
+            return "No existe la orden: <" + orden + ">"
+        else:
+            return "Error desconocido"
+        
 
 
     
@@ -129,13 +142,13 @@ class GrabDataArduino(Resource):
         arduinoDao = ArduinoConnection()
 
         userID, datos = arduinoDao.getDataArduino()
-        print(datos)
-
+        
         if datos and self._validateJSON(datos):
             datos = json.loads(datos.decode("utf-8"))
             
             temperatura, humedad, luz, movimiento = datos["temperatura"], datos["humedad"], datos["luz"], datos["movimiento"]
             status = self._insert_db(temperatura, humedad, luz, movimiento, userID)
+
         elif datos and datos.decode("utf-8") == "":
             status = "No se realizo medicion"
         else:
@@ -146,16 +159,6 @@ class GrabDataArduino(Resource):
             "data": datos or {}
         }
 
-    #No se usa
-    def _get_args(self):
-        args = self.parser.parse_args() 
-        temperatura = args['temperatura']
-        humedad = args['humedad']
-        luz = args['luz']
-        movimiento = args['movimiento']
-        userID = args['UserID']
-
-        return temperatura, humedad, luz, movimiento, userID
 
     @classmethod
     def _insert_db(cls, temperatura, humedad, luz, movimiento, userID):
@@ -239,17 +242,14 @@ class SendOrder(Resource):
     @api.expect(argument_parserSend)
     def post(self):
         """write data in arduino serial port"""
-
         orden = self._get_args()
 
-        
         arduinoDao = ArduinoConnection()
 
-        arduinoDao.sendDataArduino(orden)
-        
+        status = arduinoDao.sendDataArduino(orden)
 
         return {
-            "status": "OK"
+            "status": status
         }
 
     def _get_args(self):
