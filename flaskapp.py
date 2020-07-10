@@ -108,12 +108,13 @@ class ArduinoConnection(threading.Thread):
             arduino.readline()
 
             confirmacion = arduino.readline().decode(
-                "utf-8")  # Recibe la confirmacion de recepcion
+                "utf-8").replace('\r\n', '')  # Recibe la confirmacion de recepcion
 
         threadLock.release()
-        if confirmacion == "OK\r\n":
+        
+        if confirmacion == "OK":
             return "OK-Orden realizada"
-        elif confirmacion == "No\r\n":
+        elif confirmacion == "No":
             return "No existe la orden: <" + orden + ">"
         else:
             return "Error desconocido"
