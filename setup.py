@@ -16,6 +16,8 @@ setup(
         'flask_cors==3.0.8',
         'flask_restplus==0.13.0',
         'pymongo',
-        'dnspython'
+        'dnspython',
+        'pySerial',
+        'getmac'
     ]
 )
