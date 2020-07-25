@@ -1,18 +1,21 @@
 {
 	"info": {
-		"_postman_id": "aa9ff104-c880-407f-8434-2dbf53a2b66a",
-		"name": "tie",
+		"_postman_id": "5cb4a942-d62c-4244-a74d-8622b15a7119",
+		"name": "TFG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "asdfasdf",
+			"name": "Solicitar datos almacenados",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"sensor\": \"sensor1\",\r\n    \"data\": 15\r\n}",
+					"raw": "{\"userID\":\"d8:cb:8a:1c:62:78\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -20,7 +23,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/insert",
+					"raw": "http://localhost:8080/v1/getData",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -28,7 +31,60 @@
 					"port": "8080",
 					"path": [
 						"v1",
-						"insert"
+						"getData"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Solicitar datos Arduino",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/grabData",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"grabData"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Mandar orden arduino",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"orden\": \"11\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/v1/sendOrder",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"sendOrder"
 					]
 				}
 			},
