@@ -13,6 +13,7 @@ from ArduinoConnection import ArduinoConnection
 # flask configuration
 app = Flask(APP_NAME)
 app.config.from_object('config')
+
 api = Api(app, version=app.config['VERSION'],
           title=app.config['TITLE'], description=app.config['DESCRIPTION'])
 mongodb_service = api.namespace('v1', description=app.config['DESCRIPTION'])
@@ -22,7 +23,6 @@ CORS(app)
 
 # instance my SQLUtils wrapper
 mongoDB = MongoDB(app.config['MONGO_URI'], app.config['MONGO_DB'])
-
 
 # error handling
 @api.errorhandler(BadRequest)
