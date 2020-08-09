@@ -7,6 +7,7 @@ import threading
 import time
 
 from flask import Flask
+from flask import request
 from flask_cors import CORS
 from flask_restplus import Api, Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
@@ -185,7 +186,7 @@ class GrabDataArduino(Resource):
 
 argument_parserGet = reqparse.RequestParser()
 argument_parserGet.add_argument(
-    'userID', required=True, type=str, location='json', help='missing userID parameter')
+    'userID', required=False, type=str, location='json', help='missing userID parameter')
 
 
 @mongodb_service.route("/getData")
@@ -201,7 +202,8 @@ class SQLGet(Resource):
     def get(self):
         """get data from db"""
 
-        userID = self._get_args()
+        #userID = self._get_args()
+        userID = request.args['userID']
 
         data = list(mongoDB.select(app.config['MONGO_COLLECTION'], userID))
 
@@ -223,7 +225,7 @@ class SQLGet(Resource):
     @classmethod
     def _selectKeys(cls, data, keys):
  
-        return [{key: datos.pop(key) if key != "timestamp" else datos.pop(key).strftime("%m/%d/%Y, %H:%M:%S") for key in keys} for datos in data]
+        return [{key: datos.pop(key) if key != "timestamp" else datos.pop(key).timestamp() * 1000 for key in keys} for datos in data]
 
 
 argument_parserSend = reqparse.RequestParser()

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5cb4a942-d62c-4244-a74d-8622b15a7119",
+		"_postman_id": "ae215aef-125a-40c3-8b75-a28dc7303aa4",
 		"name": "TFG",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -12,10 +12,17 @@
 			},
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"userID\":\"d8:cb:8a:1c:62:78\"}",
+					"raw": "",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -23,7 +30,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/getData",
+					"raw": "http://localhost:8080/v1/getData?userID=d8:cb:8a:1c:62:78",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -32,6 +39,12 @@
 					"path": [
 						"v1",
 						"getData"
+					],
+					"query": [
+						{
+							"key": "userID",
+							"value": "d8:cb:8a:1c:62:78"
+						}
 					]
 				}
 			},
