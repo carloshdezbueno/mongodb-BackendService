@@ -145,7 +145,7 @@ class getApiPath(Resource):
         
         #userID = self._get_args()
         userID = request.args['userID']
-        
+
         resultado = mongoDB.select("usuarios", userID)
 
         apiPath = ""
@@ -292,12 +292,10 @@ class SendOrder(Resource):
     def post(self):
         """write data in arduino serial port"""
         orden = self._get_args()
+        
+        arduinoDao = ArduinoConnection()
 
-        print("Orden: " + orden)
-
-        #arduinoDao = ArduinoConnection()
-
-        #status = arduinoDao.sendDataArduino(orden)
+        status = arduinoDao.sendDataArduino(orden)
  
         return {
             "status": "status"
