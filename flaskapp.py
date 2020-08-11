@@ -12,7 +12,7 @@ from flask_cors import CORS
 from flask_restplus import Api, Resource, reqparse
 from werkzeug.exceptions import BadRequest, NotFound
 
-from config import APP_NAME
+from config import APP_NAME, PORT as puertoApp
 from MongoDBUtils.MongoDBUtils import MongoDB
 
 # flask configuration
@@ -121,8 +121,54 @@ class ArduinoConnection(threading.Thread):
             return "Error desconocido"
         
 
+#Nuevo
 
-    
+argument_parserGetApiPath = reqparse.RequestParser()
+argument_parserGetApiPath.add_argument(
+    'userID', required=False, type=str, location='json', help='missing userID parameter')
+
+@api.route("/getApiPath")
+@api.doc(
+    params={
+        'userID' : 'Identificador del usuario'
+    }
+)
+class getApiPath(Resource):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parser = argument_parserGetApiPath
+
+
+    @api.expect(argument_parserGetApiPath)
+    def get(self):
+        """get data from db"""
+        
+        #userID = self._get_args()
+        userID = request.args['userID']
+        
+        resultado = mongoDB.select("usuarios", userID)
+
+        apiPath = ""
+        if resultado:
+            resultado = resultado.next()
+            apiPath = 'http://' + resultado['ipAddress'] + ':' + str(puertoApp)  + '/v1'
+        
+        
+
+        return {
+            "status": "OK",
+            "apiPath": apiPath
+        }
+
+    def _get_args(self):
+        args = self.parser.parse_args()
+
+        userID = args['userID']
+
+        return userID
+
+
+#Fin nuevo
 
 # define endpoint args parser
 argument_parser = reqparse.RequestParser()
@@ -247,12 +293,14 @@ class SendOrder(Resource):
         """write data in arduino serial port"""
         orden = self._get_args()
 
-        arduinoDao = ArduinoConnection()
+        print("Orden: " + orden)
 
-        status = arduinoDao.sendDataArduino(orden)
+        #arduinoDao = ArduinoConnection()
 
+        #status = arduinoDao.sendDataArduino(orden)
+ 
         return {
-            "status": status
+            "status": "status"
         }
 
     def _get_args(self):
