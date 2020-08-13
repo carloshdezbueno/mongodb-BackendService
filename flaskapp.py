@@ -78,7 +78,7 @@ class getApiPath(Resource):
         resultado = mongoDB.select("usuarios", userID)
 
         apiPath = ""
-        if resultado:
+        with resultado:
             resultado = resultado.next()
             apiPath = 'http://' + resultado['ipAddress'] + ':' + str(puertoApp)  + '/v1'
         
@@ -257,7 +257,7 @@ class SendOrder(Resource):
         status = arduinoDao.sendDataArduino(orden)
  
         return {
-            "status": "status"
+            "status": status
         }
 
     def _get_args(self):
@@ -268,8 +268,9 @@ class SendOrder(Resource):
 
     @classmethod
     def esNumero(cls, cadena):
-        try:
+        try: 
             int(cadena)
             return True
-        except ValueError:
-            return False
+        except ValueError: 
+            return False 
+ 
