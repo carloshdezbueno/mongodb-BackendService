@@ -11,6 +11,11 @@ class MongoDB:
 
     def select(self, collection, userID):
         return self.conn[collection].find({ "UserID": userID })
-        
+    
+    def deleteUserID(self, collection, userID):
+        return self.conn[collection].delete_one({ "UserID": userID })
+
+    def findUserID(self, collection, userID, ip):
+        return self.conn[collection].find({ "UserID": userID, "ipAddress": ip })
             
         

@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import socket
 
 from flask import Flask
 from flask_cors import CORS
@@ -71,6 +72,22 @@ class GrabDataArduino(Resource):
 
         userID, datos = arduinoDao.getDataArduino()
 
+        print("Su UserID es: " + userID)
+
+        ip = socket.gethostbyname(socket.gethostname())
+        
+
+        datosUsuario = [{key: datos.pop(key) for key in ["UserID", "ipAddress"]} for datos in mongoDB.findUserID("usuarios", userID, ip)]
+
+        if len(datosUsuario)!=1:
+            try:
+                mongoDB.deleteUserID("usuarios", userID)
+            except Exception:
+                print("error")
+
+            mongoDB.insert("usuarios", { "UserID": userID, "ipAddress": ip })
+
+
         if datos and self._validateJSON(datos):
             datos = json.loads(datos.decode("utf-8"))
 
@@ -83,7 +100,7 @@ class GrabDataArduino(Resource):
             status = "No se realizo medicion"
             codRespuesta = 502
         else:
-            status = "No esta OK mi pana"
+            status = "Se produjo algun error desconocido"
             codRespuesta = 500
 
         return {
