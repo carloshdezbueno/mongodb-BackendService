@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import socket
+import serial
 
 from flask import Flask
 from flask import request
@@ -78,10 +79,11 @@ class getApiPath(Resource):
         resultado = mongoDB.select("usuarios", userID)
 
         apiPath = ""
-        with resultado:
+        try:
             resultado = resultado.next()
             apiPath = 'http://' + resultado['ipAddress'] + ':' + str(puertoApp)  + '/v1'
-        
+        except StopIteration:
+            apiPath = "NotFound"
         
 
         return {
@@ -121,7 +123,14 @@ class GrabDataArduino(Resource):
 
         arduinoDao = ArduinoConnection.get_instance()
 
-        userID, datos = arduinoDao.getDataArduino()
+        try:
+            userID, datos = arduinoDao.getDataArduino()
+
+        except serial.SerialException:
+            return {
+            "status": "Error en la comunicacion con arduino",
+            "data": {}
+        }, 502
 
         print("Su UserID es: " + userID)
 
@@ -252,16 +261,21 @@ class SendOrder(Resource):
                     "status": "Error, solo dispones de los pines del 2 al 40"
                 }, 400
 
-        arduinoDao = ArduinoConnection.get_instance()
+        codresp = 200
+        try:
+            arduinoDao = ArduinoConnection.get_instance()
 
-        status = arduinoDao.sendDataArduino(orden)
- 
+            status = arduinoDao.sendDataArduino(orden)
+        except serial.SerialException:
+            status = "Error en la comunicacion con el arduino"
+            codresp = 502 
+
         return {
             "status": status
-        }
+        }, codresp
 
     def _get_args(self):
-        args = self.parser.parse_args()
+        args = self.parser.parse_args() 
         orden = args['orden']
 
         return orden
