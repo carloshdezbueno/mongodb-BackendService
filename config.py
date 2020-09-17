@@ -2,8 +2,8 @@ import os
 import logging
 
 # author and license information
-AUTHOR = 'Example Examplus Examplicus'
-AUTHOR_EMAIL = 'example@example.ex'
+AUTHOR = 'Carlos Hernandez-Bueno Regojo'
+AUTHOR_EMAIL = 'chernandezre.inf'
 LICENSE = 'see license.md file for details'
 
 # log configuration
@@ -13,10 +13,10 @@ LOG_LEVEL = logging.DEBUG
 # flask configuration
 PORT = 8080
 HOST = '0.0.0.0'  # bind to all interfaces
-TITLE = 'flask-MongoDB-example'
+TITLE = 'flask-backend-server'
 VERSION = '1.0'
-APP_NAME = 'flask-MongoDB-example'
-DESCRIPTION = 'Example to use flask and MongoDB'
+APP_NAME = 'flask-backend-server'
+DESCRIPTION = 'Backend server for TFG'
 
 # SQLUtils configuration
 MONGO_URI = 'mongodb+srv://arduinoWM:chernandezre@arduinosensors.yvbii.mongodb.net/test?authSource=admin&replicaSet=atlas-pdmd2o-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'

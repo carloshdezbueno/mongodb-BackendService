@@ -72,15 +72,16 @@ class getApiPath(Resource):
     @api.expect(argument_parserGetApiPath)
     def get(self):
         """get data from db"""
-        
         #userID = self._get_args()
         userID = request.args['userID']
 
         resultado = mongoDB.select("usuarios", userID)
 
         apiPath = ""
+        
         try:
             resultado = resultado.next()
+            
             apiPath = 'http://' + resultado['ipAddress'] + ':' + str(puertoApp)  + '/v1'
         except StopIteration:
             apiPath = "NotFound"
@@ -131,8 +132,6 @@ class GrabDataArduino(Resource):
             "status": "Error en la comunicacion con arduino",
             "data": {}
         }, 502
-
-        print("Su UserID es: " + userID)
 
         ip = socket.gethostbyname(socket.gethostname())
         
