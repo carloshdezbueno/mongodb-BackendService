@@ -19,7 +19,7 @@ APP_NAME = 'flask-backend-server'
 DESCRIPTION = 'Backend server for TFG'
 
 # SQLUtils configuration
-MONGO_URI = 'mongodb+srv://arduinoWM:chernandezre@arduinosensors.yvbii.mongodb.net/test?authSource=admin&replicaSet=atlas-pdmd2o-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true'
+MONGO_URI = '<MongoDBUri>'
 MONGO_DB = 'datosSensores'
 MONGO_COLLECTION = 'sensores'
 
