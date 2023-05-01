@@ -11,7 +11,7 @@ setup(
     url="http://localhost:8080",
     packages=['MongoDBUtils'],
     install_requires=[
-        'Flask==1.1.1',
+        'Flask==2.3.2',
         'werkzeug==0.16.1',
         'flask_cors==3.0.9',
         'flask_restplus==0.13.0',
